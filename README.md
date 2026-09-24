@@ -70,9 +70,17 @@ Utiliza funções recursivas para realizar:
 - Somatório das notas;
 - Contagem de alunos aprovados.
 
-### 7. Encerramento
+### 7. Funcionalidades Extras
 
-Finaliza a execução do sistema.
+Novas funcionalidades que deixam o código mais dinâmico, mas mantendo o mesmo escopo do projeto.
+
+As funcionalidades extras incluem:
+
+- Busca sequencial: permite procurar um aluno pelo nome e verificar sua nota;
+- Estatísticas complementares: apresenta informações adicionais sobre os alunos e suas notas;
+- Soma recursiva de dígitos: recebe um número inteiro e calcula a soma de seus dígitos utilizando recursividade;
+- Listagem inversa: exibe os alunos na ordem inversa em que foram cadastrados, utilizando recursividade;
+- As funcionalidades extras são acessadas através de um submenu, mantendo a organização do menu principal.
 
 ---
 
@@ -84,3 +92,36 @@ Foram desenvolvidas duas funções principais:
 
 ```text
 somaRecursiva(notas, totalAlunos)
+```
+---
+## ✅ Validação de Dados
+
+O sistema possui validações para evitar entradas incorretas.
+
+Nome
+
+São aceitos somente letras e espaços.
+
+Nota
+
+A nota deve estar no intervalo:
+
+0.0 até 10.0
+
+Entradas inválidas são rejeitadas e o sistema solicita uma nova informação ao usuário.
+
+---
+## ⚠️ Tratamento de Entradas
+
+Os menus também possuem tratamento para opções inválidas.
+
+Quando uma opção inexistente é informada, o sistema apresenta uma mensagem de erro e solicita uma nova opção.
+
+O programa somente é encerrado quando o usuário escolhe a opção 0 - Encerrar
+
+---
+## 🔚 Conclusão
+
+O projeto possibilitou aplicar na prática conceitos importantes da disciplina de Estruturas de Dados, principalmente o uso de vetores, listas, funções, busca sequencial e recursividade.
+
+A implementação em C e Python também permitiu comparar diferentes formas de trabalhar com estruturas de dados e gerenciamento de informações.
