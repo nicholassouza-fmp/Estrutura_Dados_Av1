@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define TAM_NOME             50
 #define CAPACIDADE_INICIAL    5
@@ -22,6 +23,18 @@ int contarAprovadosRecursivo(float notasArr[], int total);
 void exibirEstatisticasRecursivas(float notasArr[], int total);
 void limparBufferEntrada(void);
 void liberarMemoria(char (**nomesPtr)[TAM_NOME], float **notasPtr);
+int lerInteiro(const char *mensagem, int *valor);
+int lerFloat(const char *mensagem, float *valor);
+
+
+int   validarNota(float nota);
+int   buscarAlunoSequencial(char nomesArr[][TAM_NOME], int total, const char *nomeBusca);
+void  buscarAlunoPorNome(char nomesArr[][TAM_NOME], float notasArr[], int total);
+float calcularPercentualAprovacao(int aprovados, int total);
+int   contarAcimaDaMedia(float notasArr[], int total, float media);
+int   somaDigitosRecursivo(int n);
+void  exibirInvertidoRecursivo(char nomesArr[][TAM_NOME], float notasArr[], int indice);
+void  submenuExtras(char nomesArr[][TAM_NOME], float notasArr[], int total);
 
 void exibirMenu(void) {
     printf("\n ========== SISTEMA DE GESTAO DE NOTAS ==========\n");
@@ -31,6 +44,7 @@ void exibirMenu(void) {
     printf("4 - Maior e menor nota registrada\n");
     printf("5 - Alunos aprovados\n");
     printf("6 - Estatisticas recursivas\n");
+    printf("7 - Funcionalidades extras\n");
     printf("0 - Encerrar sistema\n");
 }
 
@@ -55,26 +69,51 @@ void cadastrarAluno(char (**nomesPtr)[TAM_NOME], float **notasPtr, int *total, i
     limparBufferEntrada();
 
     printf("\n === Cadastro de Alunos e Notas ===\n");
-    printf("Nome do aluno: ");
-    fgets((*nomesPtr)[*total], TAM_NOME, stdin);
-    (*nomesPtr)[*total][strcspn((*nomesPtr)[*total], "\n")] = '\0';
-
-    float notaDigitada;
-    int notaValida = 0;
-
     do {
-        printf("Nota (0.0 a 10.0): ");
-        if (scanf("%f", &notaDigitada) != 1) {
-            printf("Valor invalido. Digite um numero.\n");
-            limparBufferEntrada();
+        int nomeValido = 1;
+        int possuiLetra = 0;
+
+        printf("Nome do aluno: ");
+
+        if (fgets((*nomesPtr)[*total], TAM_NOME, stdin) == NULL) {
+            printf("Entrada invalida. Digite o nome novamente.\n");
             continue;
         }
-        if (notaDigitada < 0.0f || notaDigitada > 10.0f) {
-            printf("Nota fora do intervalo permitido.\n");
-        } else {
-            notaValida = 1;
+
+        (*nomesPtr)[*total][strcspn((*nomesPtr)[*total], "\n")] = '\0';
+
+        for (int i = 0; (*nomesPtr)[*total][i] != '\0'; i++) {
+            unsigned char caractere = (unsigned char)(*nomesPtr)[*total][i];
+
+            if (isalpha(caractere)) {
+                possuiLetra = 1;
+            } else if (caractere != ' ') {
+                nomeValido = 0;
+                break;
+            }
         }
-    } while (!notaValida);
+
+        if (!nomeValido || !possuiLetra) {
+            printf("Nome invalido. Digite somente letras e espacos.\n");
+        } else {
+            break;
+        }
+    } while (1);
+
+    float notaDigitada;
+
+    while (1) {
+        if (!lerFloat("Nota (0.0 a 10.0): ", &notaDigitada)) {
+            continue;
+        }
+
+        if (!validarNota(notaDigitada)) {
+            printf("Nota fora do intervalo permitido.\n");
+            continue;
+        }
+
+        break;
+    }
 
     (*notasPtr)[*total] = notaDigitada;
     (*total)++;
@@ -187,11 +226,196 @@ void exibirEstatisticasRecursivas(float notasArr[], int total) {
     printf("Total de aprovados    : %d\n", aprovados);
 }
 
-void limparBufferEntrada(void) {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) {
+
+int validarNota(float nota) {
+    return (nota >= 0.0f && nota <= 10.0f);
+}
+
+int buscarAlunoSequencial(char nomesArr[][TAM_NOME], int total, const char *nomeBusca) {
+    for (int i = 0; i < total; i++) {
+        if (strcmp(nomesArr[i], nomeBusca) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void buscarAlunoPorNome(char nomesArr[][TAM_NOME], float notasArr[], int total) {
+    if (total == 0) {
+        printf("\nNenhum aluno cadastrado.\n");
+        return;
+    }
+
+    char nomeBusca[TAM_NOME];
+    limparBufferEntrada();
+    printf("\nDigite o nome do aluno a buscar: ");
+    fgets(nomeBusca, TAM_NOME, stdin);
+    nomeBusca[strcspn(nomeBusca, "\n")] = '\0';
+
+    int pos = buscarAlunoSequencial(nomesArr, total, nomeBusca);
+    if (pos >= 0) {
+        printf("Aluno encontrado na posicao %d - Nota: %.2f\n", pos + 1, notasArr[pos]);
+    } else {
+        printf("Aluno nao encontrado.\n");
     }
 }
+
+float calcularPercentualAprovacao(int aprovados, int total) {
+    if (total == 0) {
+        return 0.0f;
+    }
+    return ((float) aprovados / total) * 100.0f;
+}
+
+int contarAcimaDaMedia(float notasArr[], int total, float media) {
+    int count = 0;
+    for (int i = 0; i < total; i++) {
+        if (notasArr[i] > media) {
+            count++;
+        }
+    }
+    return count;
+}
+void exibirEstatisticasComplementares(float notasArr[], int total) {
+    if (total == 0) {
+        printf("\nNenhum aluno cadastrado.\n");
+        return;
+    }
+
+    float soma = 0.0f;
+    for (int i = 0; i < total; i++) {
+        soma += notasArr[i];
+    }
+    float media = soma / total;
+
+    int aprovados = contarAprovadosRecursivo(notasArr, total);
+    float percentual = calcularPercentualAprovacao(aprovados, total);
+    int acimaDaMedia = contarAcimaDaMedia(notasArr, total, media);
+
+    printf("\n=== ESTATISTICAS COMPLEMENTARES ===\n");
+    printf("Percentual de aprovacao : %.2f%%\n", percentual);
+    printf("Alunos acima da media (%.2f): %d\n", media, acimaDaMedia);
+}
+
+
+int somaDigitosRecursivo(int n) {
+    if (n < 0) {
+        n = -n;
+    }
+    if (n == 0) {
+        return 0;
+    }
+    return (n % 10) + somaDigitosRecursivo(n / 10);
+}
+
+void calcularSomaDigitos(void) {
+    int numero;
+
+    while (!lerInteiro("\nDigite um numero inteiro: ", &numero)) {
+    }
+
+    printf("Soma dos digitos: %d\n", somaDigitosRecursivo(numero));
+}
+
+void exibirInvertidoRecursivo(char nomesArr[][TAM_NOME], float notasArr[], int indice) {
+    if (indice < 0) {
+        return;
+    }
+    printf("- Aluno: %-20s | Nota: %.1f\n", nomesArr[indice], notasArr[indice]);
+    exibirInvertidoRecursivo(nomesArr, notasArr, indice - 1);
+}
+
+void exibirListagemInvertida(char nomesArr[][TAM_NOME], float notasArr[], int total) {
+    if (total == 0) {
+        printf("\nNenhum aluno cadastrado.\n");
+        return;
+    }
+    printf("\n=== LISTAGEM INVERTIDA (RECURSIVA) ===\n");
+    exibirInvertidoRecursivo(nomesArr, notasArr, total - 1);
+}
+
+void submenuExtras(char nomesArr[][TAM_NOME], float notasArr[], int total) {
+    int opcaoExtra = -1;
+
+    do {
+        printf("\n----- Submenu de Extras -----\n");
+        printf("1 - Buscar aluno por nome (busca sequencial)\n");
+        printf("2 - Estatisticas complementares (%% aprovacao / acima da media)\n");
+        printf("3 - Soma dos digitos de um numero (recursivo)\n");
+        printf("4 - Exibir listagem invertida (recursivo)\n");
+        printf("0 - Voltar ao menu principal\n");
+
+        if (!lerInteiro("Escolha uma opcao: ", &opcaoExtra)) {
+            continue;
+        }
+
+        switch (opcaoExtra) {
+            case 1:
+                buscarAlunoPorNome(nomesArr, notasArr, total);
+                break;
+            case 2:
+                exibirEstatisticasComplementares(notasArr, total);
+                break;
+            case 3:
+                calcularSomaDigitos();
+                break;
+            case 4:
+                exibirListagemInvertida(nomesArr, notasArr, total);
+                break;
+            case 0:
+                printf("Voltando ao menu principal...\n");
+                break;
+            default:
+                printf("Opcao invalida. Digite um valor entre 0 e 4.\n");
+        }
+    } while (opcaoExtra != 0);
+}
+
+
+void limparBufferEntrada(void) {
+    int c;
+    while ((c = getchar()) != '\\n' && c != EOF) {
+    }
+}
+
+int lerInteiro(const char *mensagem, int *valor) {
+    char linha[100];
+    char extra;
+
+    printf("%s", mensagem);
+
+    if (fgets(linha, sizeof(linha), stdin) == NULL) {
+        printf("\nEntrada invalida. Digite novamente.\n");
+        return 0;
+    }
+
+    if (sscanf(linha, " %d %c", valor, &extra) != 1) {
+        printf("Valor invalido. Digite um numero inteiro.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+int lerFloat(const char *mensagem, float *valor) {
+    char linha[100];
+    char extra;
+
+    printf("%s", mensagem);
+
+    if (fgets(linha, sizeof(linha), stdin) == NULL) {
+        printf("\nEntrada invalida. Digite novamente.\n");
+        return 0;
+    }
+
+    if (sscanf(linha, " %f %c", valor, &extra) != 1) {
+        printf("Valor invalido. Digite um numero.\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 
 void liberarMemoria(char (**nomesPtr)[TAM_NOME], float **notasPtr) {
     free(*nomesPtr);
@@ -203,14 +427,10 @@ void liberarMemoria(char (**nomesPtr)[TAM_NOME], float **notasPtr) {
 int main(void) {
     int opcao = -1;
 
-    while (opcao != 0) {
+    do {
         exibirMenu();
-        printf("Escolha uma opcao: ");
 
-        if (scanf("%d", &opcao) != 1) {
-            printf("\nEntrada invalida. Digite um numero.\n");
-            limparBufferEntrada();
-            opcao = -1;
+        if (!lerInteiro("Escolha uma opcao: ", &opcao)) {
             continue;
         }
 
@@ -233,13 +453,16 @@ int main(void) {
             case 6:
                 exibirEstatisticasRecursivas(notas, totalAlunos);
                 break;
+            case 7:
+                submenuExtras(nomes, notas, totalAlunos);
+                break;
             case 0:
                 printf("\nSistema Encerrado!\n");
                 break;
             default:
-                break;
+                printf("Opcao invalida. Digite um valor entre 0 e 7.\n");
         }
-    }
+    } while (opcao != 0);
 
     liberarMemoria(&nomes, &notas);
     return 0;
